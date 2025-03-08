@@ -84,8 +84,6 @@ class HomeScreen extends StatelessWidget{
                   }
                 },
               ),
-
-
             ],
           )
         ],
@@ -142,20 +140,15 @@ class HomeScreen extends StatelessWidget{
                     IconButton(
                       icon: Icon(Icons.list),
                       tooltip: "Records",
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: () {},
                     ),
 
                     IconButton(
                       icon: Icon(Icons.pie_chart),
                       tooltip: "Charts",
                       onPressed: () {
-                        Navigator.of(context).push(
+                        Navigator.pushReplacement(
+                          context,
                           MaterialPageRoute(
                             builder: (context) => ChartsScreen(),
                           ),
