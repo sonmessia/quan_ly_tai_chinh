@@ -1,44 +1,26 @@
 {
   "project_info": {
-    "project_number": "871179823870",
-    "project_id": "quanlytaichinh-e564d",
-    "storage_bucket": "quanlytaichinh-e564d.firebasestorage.app"
+    "project_number": "896891712789",
+    "project_id": "flutter-demo-f6880",
+    "storage_bucket": "flutter-demo-f6880.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:871179823870:android:65f2a3f3cf637b0eca93af",
+        "mobilesdk_app_id": "1:896891712789:android:8cc62774c366531eaf651c",
         "android_client_info": {
-          "package_name": "com.nhom5.quanlytaichinh"
+          "package_name": "com.example.quan_ly_tai_chinh"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "871179823870-0u3uagavgpqsus86o2q66rongr7i1e96.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.nhom5.quanlytaichinh",
-            "certificate_hash": "386e23eb2dd8bfac5e9a9f2788e4949c5352e55b"
-          }
-        },
-        {
-          "client_id": "871179823870-tdo497dhbdmpstkque7u6t5ld5751cfb.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBLW9QsYohXhqAO68ageEK0vMbm81s7Xs0"
+          "current_key": "AIzaSyCTKTVOyHKX4PaS3c1L_RNzoQP-Q1vqkXo"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "871179823870-tdo497dhbdmpstkque7u6t5ld5751cfb.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
