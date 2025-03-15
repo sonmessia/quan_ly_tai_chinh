@@ -19,7 +19,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Reports", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        title: Text("Reports", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
@@ -43,7 +43,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           Center(child: Text("Accounts View", style: TextStyle(color: Colors.white, fontSize: 18))),
         ],
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
     );
   }
 }

@@ -28,7 +28,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Charts",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
         backgroundColor: Colors.black,
       ),
@@ -40,7 +40,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
               children: [
                 Text("Bar Chart",
                     style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                 SizedBox(height: 10),
                 TransactionBarChart(monthlyData: monthlyData),
               ],
@@ -52,7 +52,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
               children: [
                 Text("Pie Chart",
                     style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                 SizedBox(height: 10),
                 TransactionPieChart(monthlyData: monthlyData),
               ],
@@ -63,8 +63,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
             child: Column(
               children: [
                 Text("Line Chart",
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                 SizedBox(height: 10),
                 TransactionLineChart(monthlyData: monthlyData),
               ],
@@ -72,7 +71,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
     );
   }
 }

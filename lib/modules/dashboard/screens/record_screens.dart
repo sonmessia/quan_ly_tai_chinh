@@ -4,7 +4,11 @@ class RecordsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Transactions")),
+      appBar: AppBar(title: Text("Transactions",
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: Colors.black, iconTheme: IconThemeData(color: Colors.white)
+      ),
       body: ListView(
         children: [
           ListTile(

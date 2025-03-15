@@ -35,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: _onItemTapped,
         selectedItemColor: Colors.yellow[700],
         unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 8,
         items: [
           BottomNavigationBarItem(
