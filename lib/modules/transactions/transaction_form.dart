@@ -4,10 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:quan_ly_tai_chinh/models/transaction_model.dart';
 import 'package:quan_ly_tai_chinh/provider/transaction_provider.dart';
 
-final TextEditingController amountController = TextEditingController();
-
-class TransactionItem extends StatelessWidget {
-  final String type; // 'expense' hoặc 'income'
+class TransactionItem extends StatefulWidget {
+  final String type;
   final String category;
   final String status;
   final String paymentMethod;
@@ -21,35 +19,49 @@ class TransactionItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<TransactionItem> createState() => _TransactionItemState();
+}
+
+class _TransactionItemState extends State<TransactionItem> {
+  final TextEditingController amountController = TextEditingController();
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    super.dispose();
+  }
+
+  void _resetForm() {
+    amountController.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Card(
       child: Column(
         children: [
           ListTile(
-            // Icon chính của giao dịch
             leading: Icon(
-              type == 'expense'
-                  ? TransactionIcons.expenseIcons[category]
-                  : TransactionIcons.incomeIcons[category],
-              color: type == 'expense' ? Colors.red : Colors.green,
+              widget.type == 'expense'
+                  ? TransactionIcons.expenseIcons[widget.category]
+                  : TransactionIcons.incomeIcons[widget.category],
+              color: widget.type == 'expense' ? Colors.red : Colors.green,
               size: 32,
             ),
-            title: Text(category),
-            // Icon phương thức thanh toán
+            title: Text(widget.category),
             subtitle: Row(
               children: [
                 Icon(
-                  TransactionIcons.paymentMethodIcons[paymentMethod],
+                  TransactionIcons.paymentMethodIcons[widget.paymentMethod],
                   size: 16,
                 ),
                 const SizedBox(width: 8),
-                Text(paymentMethod),
+                Text(widget.paymentMethod),
               ],
             ),
-            // Icon trạng thái
             trailing: Icon(
-              TransactionIcons.statusIcons[status],
-              color: _getStatusColor(status),
+              TransactionIcons.statusIcons[widget.status],
+              color: _getStatusColor(widget.status),
             ),
           ),
           Padding(
@@ -75,14 +87,16 @@ class TransactionItem extends StatelessWidget {
                   return;
                 }
                 final transaction = Transaction(
-                  type: type,
-                  category: category,
+                  type: widget.type,
+                  category: widget.category,
                   amount: double.parse(amountController.text),
-                  paymentMethod: paymentMethod,
-                  status: status,
+                  paymentMethod: widget.paymentMethod,
+                  status: widget.status,
                   date: DateTime.now(),
                 );
-                Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
+                Provider.of<TransactionProvider>(context, listen: false)
+                    .addTransaction(transaction);
+                _resetForm();
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
