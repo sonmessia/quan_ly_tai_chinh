@@ -6,11 +6,11 @@ class BalanceCard extends StatelessWidget {
   final double percentageChange;
 
   const BalanceCard({
-    Key? key,
+    super.key,
     required this.balance,
     required this.currency,
     required this.percentageChange,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

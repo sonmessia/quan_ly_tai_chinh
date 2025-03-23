@@ -4,6 +4,8 @@ import 'package:quan_ly_tai_chinh/core/config/constants.dart';
 import '../../transactions/transaction_form.dart';
 
 class AddTransactionScreen extends StatefulWidget {
+  const AddTransactionScreen({super.key});
+
   @override
   _AddTransactionScreenState createState() => _AddTransactionScreenState();
 }

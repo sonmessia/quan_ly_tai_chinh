@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/transaction_model.dart';
 
 class TransactionProvider with ChangeNotifier {
-  List<Transaction> _transactions = [];
+  final List<Transaction> _transactions = [];
 
   List<Transaction> get transactions => _transactions;
 

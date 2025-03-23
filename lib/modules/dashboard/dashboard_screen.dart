@@ -6,6 +6,8 @@ import 'screens/report_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/add_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
 }
@@ -22,7 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _screens = [
     RecordsScreen(),
     ChartsScreen(),
-    ReportsScreen(),
+    ReportsScreen(transactions: []),
     SettingScreens(),
   ];
   @override
@@ -65,10 +67,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(
                     builder: (context) => AddTransactionScreen()));
           },
-          child: Icon(Icons.add),
           backgroundColor: Colors.yellow[700],
           elevation: 4,
           mini: false,
+          child: Icon(Icons.add),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

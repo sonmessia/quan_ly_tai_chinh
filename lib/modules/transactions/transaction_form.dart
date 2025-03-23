@@ -11,12 +11,12 @@ class TransactionItem extends StatefulWidget {
   final String paymentMethod;
 
   const TransactionItem({
-    Key? key,
+    super.key,
     required this.type,
     required this.category,
     required this.status,
     required this.paymentMethod,
-  }) : super(key: key);
+  });
 
   @override
   State<TransactionItem> createState() => _TransactionItemState();

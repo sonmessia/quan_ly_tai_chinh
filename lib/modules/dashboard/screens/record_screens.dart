@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quan_ly_tai_chinh/models/transaction_model.dart';
 import 'package:quan_ly_tai_chinh/provider/transaction_provider.dart';
 import 'package:intl/intl.dart';
 
 class RecordsScreen extends StatelessWidget {
   final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
+
+  RecordsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

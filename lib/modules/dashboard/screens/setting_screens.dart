@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 
 class SettingScreens extends StatefulWidget {
+  const SettingScreens({super.key});
+
   @override
   _SettingScreensState createState() => _SettingScreensState();
 }

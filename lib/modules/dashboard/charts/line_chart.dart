@@ -1,64 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../widgets/transaction_line_chart.dart';
+import '../../../models/transaction_model.dart';
+import 'package:collection/collection.dart';
 
-class TransactionLineChart extends StatelessWidget {
-  final List<double> monthlyData;
-  final bool isYearly;
+class LineChartWidget extends StatelessWidget {
+  final List<Transaction> transactions;
 
-  const TransactionLineChart({
-    super.key,
-    required this.monthlyData,
-    this.isYearly = false,
-  });
+  const LineChartWidget({super.key, required this.transactions});
+
+  List<FlSpot> _getDailyData() {
+    final sortedTransactions = [...transactions]..sort((a, b) => a.date.compareTo(b.date));
+    final dailyTotals = <DateTime, double>{};
+
+    for (var transaction in sortedTransactions) {
+      final date = DateTime(transaction.date.year, transaction.date.month, transaction.date.day);
+      dailyTotals.update(
+        date,
+            (value) => value + (transaction.type.toLowerCase() == "income" ? transaction.amount : -transaction.amount),
+        ifAbsent: () => transaction.type.toLowerCase() == "income" ? transaction.amount : -transaction.amount,
+      );
+    }
+
+    return dailyTotals.entries.mapIndexed((index, e) => FlSpot(index.toDouble(), e.value)).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 300,
-      child: LineChart(
-        LineChartData(
-          maxY: monthlyData.reduce((a, b) => a > b ? a : b) * 1.2,
-          titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: true, reservedSize: 60),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  if (value < 0 || value >= monthlyData.length) return const Text('');
-                  return Text(
-                    isYearly
-                        ? 'T${value + 1}'
-                        : (value + 1).toString(),
-                    style: const TextStyle(fontSize: 12),
-                  );
-                },
-              ),
-            ),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          gridData: const FlGridData(show: true, horizontalInterval: 1),
-          lineBarsData: [
-            LineChartBarData(
-              spots: List.generate(
-                monthlyData.length,
-                    (index) => FlSpot(index.toDouble(), monthlyData[index]),
-              ),
-              isCurved: true,
-              color: Colors.blue,
-              barWidth: 3,
-              dotData: const FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.blue.withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Column(
+      children: [
+        const Text('Balance Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        TransactionLineChart(monthlyData: _getDailyData().map((spot) => spot.y).toList()),
+      ],
     );
   }
 }
