@@ -10,6 +10,10 @@ class LineChartWidget extends StatelessWidget {
   const LineChartWidget({super.key, required this.transactions});
 
   List<FlSpot> _getDailyData() {
+    if (transactions.isEmpty) {
+      return [FlSpot(0, 0)]; // Return default point if no transactions
+    }
+
     final sortedTransactions = [...transactions]..sort((a, b) => a.date.compareTo(b.date));
     final dailyTotals = <DateTime, double>{};
 
@@ -22,7 +26,8 @@ class LineChartWidget extends StatelessWidget {
       );
     }
 
-    return dailyTotals.entries.mapIndexed((index, e) => FlSpot(index.toDouble(), e.value)).toList();
+    final spots = dailyTotals.entries.mapIndexed((index, e) => FlSpot(index.toDouble(), e.value)).toList();
+    return spots.isEmpty ? [FlSpot(0, 0)] : spots;
   }
 
   @override
@@ -31,7 +36,10 @@ class LineChartWidget extends StatelessWidget {
       children: [
         const Text('Balance Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        TransactionLineChart(monthlyData: _getDailyData().map((spot) => spot.y).toList()),
+        if (transactions.isEmpty)
+          const Text('No transactions to display', style: TextStyle(color: Colors.grey))
+        else
+          TransactionLineChart(monthlyData: _getDailyData().map((spot) => spot.y).toList()),
       ],
     );
   }

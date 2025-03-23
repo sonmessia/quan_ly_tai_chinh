@@ -13,5 +13,15 @@ class Transaction {
     required this.paymentMethod,
     required this.status,
     required this.date,
-  });
+  }) {
+    if (amount < 0) {
+      throw ArgumentError.value(amount, 'amount', 'Amount must be greater than zero');
+    }
+    if (type.toLowerCase() != 'income' && type.toLowerCase() != 'expense') {
+      throw ArgumentError.value(type, 'type', 'Type must be either "income" or "expense"');
+    }
+  }
+
+  String get safeType => type.toLowerCase() == 'income' ? 'Income' : 'Expense';
+  String get safeCategory => category.isEmpty ? 'Uncategorized' : category;
 }
