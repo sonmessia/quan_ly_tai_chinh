@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/charts_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/record_screens.dart';
-import 'package:quan_ly_tai_chinh/modules/dashboard/screens/setting_screens.dart';
+import 'package:quan_ly_tai_chinh/modules/auth/login_screen.dart';
 import 'screens/report_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/add_screen.dart';
 
@@ -25,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     RecordsScreen(),
     ChartsScreen(),
     ReportsScreen(transactions: []),
-    SettingScreens(),
+    SignInScreen(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -58,21 +58,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: Container(
-        margin: EdgeInsets.only(bottom: 15),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => AddTransactionScreen()));
-          },
-          backgroundColor: Colors.yellow[700],
-          elevation: 4,
-          mini: false,
-          child: Icon(Icons.add),
-        ),
-      ),
+      floatingActionButton: _selectedIndex != 3
+          ? Container(
+              margin: EdgeInsets.only(bottom: 15),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => AddTransactionScreen()));
+                },
+                backgroundColor: Colors.yellow[700],
+                elevation: 4,
+                mini: false,
+                child: Icon(Icons.add),
+              ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
