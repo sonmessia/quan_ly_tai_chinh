@@ -1,79 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/charts_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/record_screens.dart';
+import 'package:quan_ly_tai_chinh/modules/dashboard/screens/report_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/setting_screens.dart';
-import 'screens/report_screens.dart';
 import 'package:quan_ly_tai_chinh/modules/dashboard/screens/add_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  late PageController _pageController;
 
   final List<Widget> _screens = [
     RecordsScreen(),
     ChartsScreen(),
-    ReportsScreen(transactions: []),
+    ReportsScreen(),
     SettingScreens(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  void _onItemTapped(int pageIndex) {
+    setState(() {
+      _selectedIndex = pageIndex;
+    });
+    _pageController.animateToPage(
+      pageIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _openAddTransactionScreenSmoothly(BuildContext context) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const AddTransactionScreen(),
+        transitionsBuilder: (_, animation, __, child) {
+          final offsetAnimation = Tween<Offset>(
+            begin: const Offset(0.0, 1.0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut));
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Colors.yellow[700],
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.black,
+      body: PageView(
+        controller: _pageController,
+        children: _screens,
+        onPageChanged: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        physics: const BouncingScrollPhysics(),
+      ),
+      bottomNavigationBar: ConvexAppBar(
+        style: TabStyle.fixedCircle,
+        backgroundColor: Colors.white,
+        color: Colors.grey,
+        activeColor: primaryColor,
         elevation: 8,
+        height: 60,
         items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: "Records",
+          const TabItem(icon: Icons.list, title: 'Records'),
+          const TabItem(icon: Icons.pie_chart, title: 'Charts'),
+          TabItem(
+            icon: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary, // nền tím
+              ),
+              padding: const EdgeInsets.all(6),
+              child: const Icon(Icons.add, color: Colors.black, size: 28), // dấu + đen
+            ),
+            title: '',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart),
-            label: "Charts",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: "Reports",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Me",
-          ),
+          const TabItem(icon: Icons.analytics, title: 'Reports'),
+          const TabItem(icon: Icons.person, title: 'Me'),
         ],
+        initialActiveIndex: _selectedIndex < 2 ? _selectedIndex : _selectedIndex + 1,
+        onTap: (int index) {
+          if (index == 2) {
+            _openAddTransactionScreenSmoothly(context);
+          } else {
+            final adjustedIndex = index > 2 ? index - 1 : index;
+            _onItemTapped(adjustedIndex);
+          }
+        },
       ),
-      floatingActionButton: Container(
-        margin: EdgeInsets.only(bottom: 15),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => AddTransactionScreen()));
-          },
-          backgroundColor: Colors.yellow[700],
-          elevation: 4,
-          mini: false,
-          child: Icon(Icons.add),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

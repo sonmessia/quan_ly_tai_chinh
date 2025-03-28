@@ -1,0 +1,2 @@
+C:/Users/Admin/StudioProjects/quan_ly_tai_chinh/android/app/.cxx/Debug/07656563/x86/CMakeFiles/edit_cache.dir
+C:/Users/Admin/StudioProjects/quan_ly_tai_chinh/android/app/.cxx/Debug/07656563/x86/CMakeFiles/rebuild_cache.dir
