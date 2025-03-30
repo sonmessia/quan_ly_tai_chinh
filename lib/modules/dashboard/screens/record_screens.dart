@@ -14,48 +14,63 @@ class RecordsScreen extends StatefulWidget {
 }
 
 class _RecordsScreenState extends State<RecordsScreen> {
-  late DateTime selectedMonth;
+  late DateTime selectedDate;
+  final TextEditingController _searchController = TextEditingController();
+  String searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    selectedMonth = DateTime.now();
+    selectedDate = DateTime.now();
   }
 
-  void _pickMonth(BuildContext context) async {
-    final now = DateTime.now();
+  void _pickDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: selectedMonth,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 5),
-      initialEntryMode: DatePickerEntryMode.calendarOnly,
-      helpText: 'Chọn tháng hiển thị',
+      initialDate: selectedDate,
+      firstDate: DateTime(DateTime.now().year - 5),
+      lastDate: DateTime(DateTime.now().year + 5),
+      helpText: 'Chọn ngày muốn lọc',
     );
 
     if (picked != null) {
-      setState(() => selectedMonth = picked);
+      setState(() {
+        selectedDate = picked;
+      });
     }
+  }
+
+  void _clearFilters() {
+    setState(() {
+      selectedDate = DateTime.now();
+      searchQuery = "";
+      _searchController.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final transactionProvider = Provider.of<TransactionProvider>(context);
     final transactions = transactionProvider.transactions;
-    final formatter = DateFormat('MMMM yyyy');
 
-    final filtered = transactions
-        .where((t) =>
-    t.date.year == selectedMonth.year &&
-        t.date.month == selectedMonth.month)
-        .toList();
+    final filtered = transactions.where((t) {
+      final matchesDate = t.date.year == selectedDate.year &&
+          t.date.month == selectedDate.month &&
+          t.date.day == selectedDate.day;
 
-    final incomeTotal = filtered
-        .where((t) => t.type == 'income')
-        .fold(0.0, (sum, t) => sum + t.amount);
-    final expenseTotal = filtered
-        .where((t) => t.type == 'expense')
-        .fold(0.0, (sum, t) => sum + t.amount);
+      final matchesSearch = searchQuery.isEmpty ||
+          t.category.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          t.type.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          t.paymentMethod.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          t.status.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          t.note?.toLowerCase().contains(searchQuery.toLowerCase()) == true ||
+          t.amount.toString().contains(searchQuery);
+
+      return matchesDate && matchesSearch;
+    }).toList();
+
+    final incomeTotal = filtered.where((t) => t.type == 'income').fold(0.0, (sum, t) => sum + t.amount);
+    final expenseTotal = filtered.where((t) => t.type == 'expense').fold(0.0, (sum, t) => sum + t.amount);
     final balance = incomeTotal - expenseTotal;
 
     final grouped = <String, List<Transaction>>{};
@@ -71,12 +86,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
         child: ListView(
           children: const [
             DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blueAccent),
-              child:
-              Text('Menu', style: TextStyle(color: Colors.white, fontSize: 20)),
+              decoration: BoxDecoration(color: Colors.deepPurple),
+              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 20)),
             ),
             ListTile(leading: Icon(Icons.settings), title: Text('Settings')),
-            ListTile(leading: Icon(Icons.info), title: Text('About')),
+            ListTile(leading: Icon(Icons.bar_chart), title: Text('Statistics')),
+            ListTile(leading: Icon(Icons.info_outline), title: Text('About')),
             ListTile(leading: Icon(Icons.logout), title: Text('Logout')),
           ],
         ),
@@ -84,16 +99,24 @@ class _RecordsScreenState extends State<RecordsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
-        title: const Text('Money Tracker', style: TextStyle(color: Colors.black)),
+        title: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search...',
+            border: InputBorder.none,
+          ),
+          onChanged: (value) => setState(() => searchQuery = value),
+        ),
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
+            icon: const Icon(Icons.calendar_month_outlined, color: Colors.black),
+            onPressed: () => _pickDate(context),
           ),
           IconButton(
-            icon: const Icon(Icons.calendar_month_outlined, color: Colors.black),
-            onPressed: () => _pickMonth(context),
+            icon: const Icon(Icons.clear, color: Colors.black),
+            tooltip: 'Xóa bộ lọc',
+            onPressed: _clearFilters,
           ),
         ],
       ),
@@ -105,7 +128,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatter.format(selectedMonth),
+                  DateFormat('dd/MM/yyyy').format(selectedDate),
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -123,9 +146,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
           const Divider(thickness: 1),
           Expanded(
             child: filtered.isEmpty
-                ? const Center(
-                child: Text("No transactions",
-                    style: TextStyle(color: Colors.black54)))
+                ? const Center(child: Text("No transactions", style: TextStyle(color: Colors.black54)))
                 : ListView.builder(
               itemCount: sortedKeys.length,
               itemBuilder: (context, index) {
@@ -139,51 +160,40 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding:
-                      const EdgeInsets.only(left: 16, top: 12, bottom: 4),
-                      child: Text('$label  •  $weekday',
-                          style: const TextStyle(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.only(left: 16, top: 12, bottom: 4),
+                      child: Text(
+                        '$label  •  $weekday',
+                        style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                      ),
                     ),
                     ...txs.map((t) {
                       final isIncome = t.type == 'income';
                       final icon = isIncome
-                          ? TransactionIcons
-                          .incomeIcons[t.category.toLowerCase()]
-                          : TransactionIcons
-                          .expenseIcons[t.category.toLowerCase()];
+                          ? TransactionIcons.incomeIcons[t.category.toLowerCase()]
+                          : TransactionIcons.expenseIcons[t.category.toLowerCase()];
 
                       return InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => TransactionDetailScreen(
-                                  transaction: t),
+                              builder: (_) => TransactionDetailScreen(transaction: t),
                             ),
                           );
                         },
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.grey.shade100,
-                            child: Icon(icon ?? Icons.category,
-                                color: Colors.cyan),
+                            child: Icon(icon ?? Icons.category, color: Colors.cyan),
                           ),
                           title: Text(t.category,
-                              style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600)),
-                          subtitle: Text(
-                              DateFormat('MMM d, yyyy').format(t.date),
-                              style:
-                              const TextStyle(color: Colors.black45)),
+                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                          subtitle: Text(DateFormat('MMM d, yyyy').format(t.date),
+                              style: const TextStyle(color: Colors.black45)),
                           trailing: Text(
-                            (isIncome ? '+' : '-') +
-                                NumberFormat('#,###').format(t.amount),
+                            (isIncome ? '+' : '-') + NumberFormat('#,###').format(t.amount),
                             style: TextStyle(
-                              color:
-                              isIncome ? Colors.green : Colors.red,
+                              color: isIncome ? Colors.green : Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -211,8 +221,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
           FittedBox(
             child: Text(
               NumberFormat('#,###').format(amount),
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           )
         ],

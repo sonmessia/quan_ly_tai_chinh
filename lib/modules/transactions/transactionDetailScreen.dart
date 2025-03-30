@@ -67,16 +67,38 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       appBar: AppBar(
         title: const Text('Transaction Detail'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _toggleEdit,
-            tooltip: 'Edit',
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert), // ba chấm dọc
+            onSelected: (value) {
+              if (value == 'edit') {
+                // TODO: mở khung sửa (hiện bottom sheet hoặc chuyển trang sửa)
+              } else if (value == 'delete') {
+                // TODO: xác nhận và xóa giao dịch
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 18, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete'),
+                  ],
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: _deleteTransaction,
-            tooltip: 'Delete',
-          )
         ],
       ),
       body: SingleChildScrollView(
