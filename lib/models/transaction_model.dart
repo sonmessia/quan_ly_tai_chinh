@@ -5,6 +5,7 @@ class Transaction {
   final String paymentMethod;
   final String status;
   final DateTime date;
+  final String? note;
 
   Transaction({
     required this.type,
@@ -13,6 +14,7 @@ class Transaction {
     required this.paymentMethod,
     required this.status,
     required this.date,
+    this.note
   }) {
     if (amount < 0) {
       throw ArgumentError.value(amount, 'amount', 'Amount must be greater than zero');

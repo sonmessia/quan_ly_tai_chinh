@@ -4,6 +4,9 @@ import '../../../provider/transaction_provider.dart';
 import '../../dashboard/charts/bar_chart.dart';
 import '../../dashboard/charts/pie_chart.dart';
 import '../../dashboard/charts/line_chart.dart';
+import 'package:quan_ly_tai_chinh/modules/dashboard/charts/category_chart.dart';
+
+
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});

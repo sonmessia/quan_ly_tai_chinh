@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:quan_ly_tai_chinh/core/config/constants.dart';
-
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:provider/provider.dart';
+import '../../../models/transaction_model.dart';
+import '../../../provider/transaction_provider.dart';
 import '../../transactions/transaction_form.dart';
+import '../../../core/config/constants.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -15,22 +18,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String _selectedCategory = 'shopping';
   String _selectedStatus = 'completed';
   String _selectedPaymentMethod = 'cash';
+  final TextEditingController _noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Transaction",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text(
+          "Add Transaction",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.black, iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Transaction Type Selector
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'expense', label: Text('Expense')),
@@ -49,96 +61,66 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             const SizedBox(height: 16),
 
             // Category Dropdown
-            DropdownButtonFormField<String>(
+            _buildDropdownField(
+              label: 'Category',
               value: _selectedCategory,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
               items: (_selectedType == 'expense'
                   ? TransactionIcons.expenseIcons.keys
                   : TransactionIcons.incomeIcons.keys)
-                  .map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Row(
-                    children: [
-                      Icon(_selectedType == 'expense'
-                          ? TransactionIcons.expenseIcons[category]
-                          : TransactionIcons.incomeIcons[category]),
-                      const SizedBox(width: 8),
-                      Text(category),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedCategory = newValue;
-                  });
-                }
-              },
+                  .map((String category) => DropdownMenuItem(
+                value: category,
+                child: Row(
+                  children: [
+                    Icon(_selectedType == 'expense'
+                        ? TransactionIcons.expenseIcons[category]
+                        : TransactionIcons.incomeIcons[category]),
+                    const SizedBox(width: 8),
+                    Text(category),
+                  ],
+                ),
+              ))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedCategory = val!),
             ),
             const SizedBox(height: 16),
 
-            // Payment Method Dropdown
-            DropdownButtonFormField<String>(
+            _buildDropdownField(
+              label: 'Payment Method',
               value: _selectedPaymentMethod,
-              decoration: const InputDecoration(
-                labelText: 'Payment Method',
-                border: OutlineInputBorder(),
-              ),
-              items: TransactionIcons.paymentMethodIcons.keys.map((String method) {
-                return DropdownMenuItem<String>(
-                  value: method,
-                  child: Row(
-                    children: [
-                      Icon(TransactionIcons.paymentMethodIcons[method]),
-                      const SizedBox(width: 8),
-                      Text(method),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedPaymentMethod = newValue;
-                  });
-                }
-              },
+              items: TransactionIcons.paymentMethodIcons.keys
+                  .map((String method) => DropdownMenuItem(
+                value: method,
+                child: Row(
+                  children: [
+                    Icon(TransactionIcons.paymentMethodIcons[method]),
+                    const SizedBox(width: 8),
+                    Text(method),
+                  ],
+                ),
+              ))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
             ),
             const SizedBox(height: 16),
 
-            // Status Dropdown
-            DropdownButtonFormField<String>(
+            _buildDropdownField(
+              label: 'Status',
               value: _selectedStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-              ),
-              items: TransactionIcons.statusIcons.keys.map((String status) {
-                return DropdownMenuItem<String>(
-                  value: status,
-                  child: Row(
-                    children: [
-                      Icon(TransactionIcons.statusIcons[status]),
-                      const SizedBox(width: 8),
-                      Text(status),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedStatus = newValue;
-                  });
-                }
-              },
+              items: TransactionIcons.statusIcons.keys
+                  .map((String status) => DropdownMenuItem(
+                value: status,
+                child: Row(
+                  children: [
+                    Icon(TransactionIcons.statusIcons[status]),
+                    const SizedBox(width: 8),
+                    Text(status),
+                  ],
+                ),
+              ))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedStatus = val!),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Preview Card
             TransactionItem(
@@ -146,10 +128,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               category: _selectedCategory,
               status: _selectedStatus,
               paymentMethod: _selectedPaymentMethod,
+              date: DateTime.now(),
+              note: _noteController.text,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: const Icon(Icons.category_outlined),
+      ),
+      items: items,
+      onChanged: onChanged,
     );
   }
 }

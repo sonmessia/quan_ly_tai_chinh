@@ -7,12 +7,17 @@ class LineChartWidget extends StatelessWidget {
   final List<Transaction> transactions;
   final String type;
 
-  const LineChartWidget({super.key, required this.transactions, required this.type});
+  const LineChartWidget({
+    super.key,
+    required this.transactions,
+    required this.type,
+  });
 
   List<FlSpot> _getDailyData() {
     if (transactions.isEmpty) return [FlSpot(0, 0)];
 
-    final filtered = transactions.where((t) => t.type.toLowerCase() == type.toLowerCase()).toList();
+    final filtered =
+    transactions.where((t) => t.type.toLowerCase() == type.toLowerCase()).toList();
     final sorted = [...filtered]..sort((a, b) => a.date.compareTo(b.date));
     final dailyTotals = <DateTime, double>{};
 
@@ -30,12 +35,12 @@ class LineChartWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: const Color(0xFFF9F4FF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 8,
@@ -47,11 +52,13 @@ class LineChartWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            type.toLowerCase() == 'income' ? 'Biến động thu nhập' : 'Biến động chi tiêu',
+            type.toLowerCase() == 'income'
+                ? 'Biến động thu nhập'
+                : 'Biến động chi tiêu',
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          if (data.isEmpty || data.length == 1 && data[0].y == 0)
+          if (data.isEmpty || (data.length == 1 && data[0].y == 0))
             const Center(
               child: Text(
                 'Không có giao dịch để hiển thị',

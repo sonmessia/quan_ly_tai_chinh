@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
 import '../../../core/config/constants.dart';
+import '../../transactions/transactionDetailScreen.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key});
@@ -43,9 +44,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
     final transactions = transactionProvider.transactions;
     final formatter = DateFormat('MMMM yyyy');
 
-    final filtered = transactions.where((t) =>
+    final filtered = transactions
+        .where((t) =>
     t.date.year == selectedMonth.year &&
-        t.date.month == selectedMonth.month).toList();
+        t.date.month == selectedMonth.month)
+        .toList();
 
     final incomeTotal = filtered
         .where((t) => t.type == 'income')
@@ -69,7 +72,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
           children: const [
             DrawerHeader(
               decoration: BoxDecoration(color: Colors.blueAccent),
-              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 20)),
+              child:
+              Text('Menu', style: TextStyle(color: Colors.white, fontSize: 20)),
             ),
             ListTile(leading: Icon(Icons.settings), title: Text('Settings')),
             ListTile(leading: Icon(Icons.info), title: Text('About')),
@@ -119,7 +123,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
           const Divider(thickness: 1),
           Expanded(
             child: filtered.isEmpty
-                ? const Center(child: Text("No transactions", style: TextStyle(color: Colors.black54)))
+                ? const Center(
+                child: Text("No transactions",
+                    style: TextStyle(color: Colors.black54)))
                 : ListView.builder(
               itemCount: sortedKeys.length,
               itemBuilder: (context, index) {
@@ -133,26 +139,53 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(left: 16, top: 12, bottom: 4),
-                      child: Text('$label  •  $weekday', style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                      padding:
+                      const EdgeInsets.only(left: 16, top: 12, bottom: 4),
+                      child: Text('$label  •  $weekday',
+                          style: const TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold)),
                     ),
                     ...txs.map((t) {
                       final isIncome = t.type == 'income';
                       final icon = isIncome
-                          ? TransactionIcons.incomeIcons[t.category.toLowerCase()]
-                          : TransactionIcons.expenseIcons[t.category.toLowerCase()];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.grey.shade100,
-                          child: Icon(icon ?? Icons.category, color: Colors.cyan),
-                        ),
-                        title: Text(t.category, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-                        subtitle: Text(DateFormat('MMM d, yyyy').format(t.date), style: const TextStyle(color: Colors.black45)),
-                        trailing: Text(
-                          (isIncome ? '+' : '-') + NumberFormat('#,###').format(t.amount),
-                          style: TextStyle(
-                            color: isIncome ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
+                          ? TransactionIcons
+                          .incomeIcons[t.category.toLowerCase()]
+                          : TransactionIcons
+                          .expenseIcons[t.category.toLowerCase()];
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TransactionDetailScreen(
+                                  transaction: t),
+                            ),
+                          );
+                        },
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.grey.shade100,
+                            child: Icon(icon ?? Icons.category,
+                                color: Colors.cyan),
+                          ),
+                          title: Text(t.category,
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600)),
+                          subtitle: Text(
+                              DateFormat('MMM d, yyyy').format(t.date),
+                              style:
+                              const TextStyle(color: Colors.black45)),
+                          trailing: Text(
+                            (isIncome ? '+' : '-') +
+                                NumberFormat('#,###').format(t.amount),
+                            style: TextStyle(
+                              color:
+                              isIncome ? Colors.green : Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       );
@@ -178,7 +211,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
           FittedBox(
             child: Text(
               NumberFormat('#,###').format(amount),
-              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           )
         ],
