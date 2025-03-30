@@ -106,6 +106,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
         },
       ),
+      floatingActionButton: _selectedIndex != 3
+          ? Container(
+              margin: EdgeInsets.only(bottom: 15),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => AddTransactionScreen()));
+                },
+                backgroundColor: Colors.yellow[700],
+                elevation: 4,
+                mini: false,
+                child: Icon(Icons.add),
+              ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
