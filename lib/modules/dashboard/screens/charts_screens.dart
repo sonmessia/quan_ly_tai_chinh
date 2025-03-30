@@ -4,6 +4,9 @@ import '../../../provider/transaction_provider.dart';
 import '../../dashboard/charts/bar_chart.dart';
 import '../../dashboard/charts/pie_chart.dart';
 import '../../dashboard/charts/line_chart.dart';
+import 'package:quan_ly_tai_chinh/modules/dashboard/charts/category_chart.dart';
+
+
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
@@ -32,8 +35,6 @@ class _ChartsScreenState extends State<ChartsScreen> with TickerProviderStateMix
     return Consumer<TransactionProvider>(
       builder: (context, transactionProvider, child) {
         final transactions = transactionProvider.transactions;
-        final expenses = transactions.where((t) => t.type.toLowerCase() == "expense").toList();
-        final income = transactions.where((t) => t.type.toLowerCase() == "income").toList();
 
         return Scaffold(
           appBar: AppBar(
@@ -53,24 +54,9 @@ class _ChartsScreenState extends State<ChartsScreen> with TickerProviderStateMix
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: BarChartWidget(transactions: expenses),
-                      ),
-                    ),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: PieChartWidget(transactions: expenses),
-                      ),
-                    ),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: LineChartWidget(transactions: expenses),
-                      ),
-                    ),
+                    BarChartWidget(transactions: transactions, type: "expense"),
+                    PieChartWidget(transactions: transactions, type: "expense"),
+                    LineChartWidget(transactions: transactions, type: "expense"),
                   ],
                 ),
               ),
@@ -78,24 +64,9 @@ class _ChartsScreenState extends State<ChartsScreen> with TickerProviderStateMix
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: BarChartWidget(transactions: income),
-                      ),
-                    ),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: PieChartWidget(transactions: income),
-                      ),
-                    ),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: LineChartWidget(transactions: income),
-                      ),
-                    ),
+                    BarChartWidget(transactions: transactions, type: "income"),
+                    PieChartWidget(transactions: transactions, type: "income"),
+                    LineChartWidget(transactions: transactions, type: "income"),
                   ],
                 ),
               ),

@@ -14,23 +14,26 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      padding: EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.8),
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: theme.colorScheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -39,62 +42,72 @@ class BalanceCard extends StatelessWidget {
         children: [
           Text(
             'Số dư hiện tại',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
               fontSize: 16,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '$currency $balance',
-                style: TextStyle(
+                style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  fontSize: 28,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(
-                    percentageChange >= 0
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  Text(
-                    '${percentageChange.abs()}%',
-                    style: TextStyle(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: percentageChange >= 0 ? Colors.green[600] : Colors.red[600],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      percentageChange >= 0
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                      size: 16,
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      '${percentageChange.abs()}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
+          Divider(color: Colors.white.withOpacity(0.3), thickness: 0.5),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildBalanceInfo(
                 context,
-                'Thu nhập',
-                '3,500,000 VND',
-                Icons.arrow_upward,
-                Colors.green,
+                icon: Icons.arrow_downward,
+                iconColor: Colors.redAccent,
+                label: 'Chi tiêu',
+                amount: '2,100,000 VND',
               ),
               _buildBalanceInfo(
                 context,
-                'Chi tiêu',
-                '2,100,000 VND',
-                Icons.arrow_downward,
-                Colors.red,
+                icon: Icons.arrow_upward,
+                iconColor: Colors.greenAccent,
+                label: 'Thu nhập',
+                amount: '3,500,000 VND',
               ),
             ],
           ),
@@ -103,45 +116,42 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBalanceInfo(BuildContext context, String label, String amount,
-      IconData icon, Color iconColor) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                color: iconColor,
-                size: 16,
+  Widget _buildBalanceInfo(
+      BuildContext context, {
+        required IconData icon,
+        required Color iconColor,
+        required String label,
+        required String amount,
+      }) {
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: iconColor.withOpacity(0.15),
+          radius: 18,
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white70,
+                fontSize: 13,
               ),
-              SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Text(
-            amount,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: 2),
+            Text(
+              amount,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        )
+      ],
     );
   }
 }

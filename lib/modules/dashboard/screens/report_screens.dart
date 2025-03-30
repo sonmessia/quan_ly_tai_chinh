@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
-import '../charts/line_chart.dart';
+import '../../../provider/transaction_provider.dart';
+
 
 class ReportsScreen extends StatefulWidget {
-  final List<Transaction> transactions;
-
-  const ReportsScreen({super.key, required this.transactions});
+  const ReportsScreen({super.key});
 
   @override
   _ReportsScreenState createState() => _ReportsScreenState();
@@ -23,37 +23,35 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final transactions = Provider.of<TransactionProvider>(context).transactions;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Reports",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)
-        ),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
         centerTitle: true,
+        elevation: 0.5,
+        backgroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.white60,
-          indicator: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
-          ),
+          labelColor: Colors.deepPurple,
+          unselectedLabelColor: Colors.black54,
+          indicatorColor: Colors.deepPurple,
+          indicatorWeight: 2,
           tabs: const [
             Tab(text: "Analytics"),
             Tab(text: "Accounts"),
           ],
         ),
-        backgroundColor: Colors.black,
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          AnalyticsTab(transactions: widget.transactions),
-          const Center(child: Text("Accounts View",
-              style: TextStyle(color: Colors.white, fontSize: 18)
-          )),
+          AnalyticsTab(transactions: transactions),
+          const Center(child: Text("Accounts View", style: TextStyle(color: Colors.black87, fontSize: 16))),
         ],
       ),
-      backgroundColor: Colors.white,
     );
   }
 }
@@ -63,7 +61,7 @@ class AnalyticsTab extends StatelessWidget {
 
   const AnalyticsTab({super.key, required this.transactions});
 
-  double get totalBudget => 5510000;
+  double get totalBudget => 5000000;
 
   double get totalExpenses => transactions
       .where((t) => t.type.toLowerCase() == "expense")
@@ -73,87 +71,78 @@ class AnalyticsTab extends StatelessWidget {
       .where((t) => t.type.toLowerCase() == "income")
       .fold(0.0, (sum, t) => sum + t.amount);
 
-  double get remaining => totalBudget - totalExpenses;
-  double get remainingPercent => (remaining / totalBudget).clamp(0.0, 1.0);
+  double get balance => totalIncome - totalExpenses;
+  double get remainingPercent => ((totalBudget - totalExpenses) / totalBudget).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            _buildCard(
-              title: "Monthly Statistics",
-              child: Column(
-                children: [
-                  _buildRow("Current", "Expenses", "Income"),
-                  _buildRow("",
-                      totalExpenses.toStringAsFixed(0),
-                      totalIncome.toStringAsFixed(0)
-                  ),
-                  const SizedBox(height: 20),
-                  LineChartWidget(transactions: transactions),
-                ],
-              ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildCard(
+            title: "Monthly Overview",
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoRow("Total Income", totalIncome, Colors.green),
+                const SizedBox(height: 8),
+                _infoRow("Total Expenses", totalExpenses, Colors.red),
+                const SizedBox(height: 8),
+                _infoRow("Balance", balance, Colors.blue),
+              ],
             ),
-            const SizedBox(height: 10),
-            _buildCard(
-              title: "Monthly Budget",
-              child: Row(
-                children: [
-                  CircularPercentIndicator(
-                    radius: 50,
-                    lineWidth: 8,
-                    percent: remainingPercent,
-                    center: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Remaining",
-                            style: TextStyle(color: Colors.white70,
-                                fontSize: 10)
-                        ),
-                        Text("${(remainingPercent * 100).toStringAsFixed(2)}%",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold
-                            )
-                        ),
-                      ],
-                    ),
-                    progressColor: Colors.yellow,
-                    backgroundColor: Colors.white24,
-                  ),
-                  const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          const SizedBox(height: 16),
+          _buildCard(
+            title: "Monthly Budget",
+            child: Row(
+              children: [
+                CircularPercentIndicator(
+                  radius: 45,
+                  lineWidth: 8,
+                  percent: remainingPercent,
+                  animation: true,
+                  center: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildBudgetRow("Remaining:", remaining),
-                      _buildBudgetRow("Budget:", totalBudget),
-                      _buildBudgetRow("Expenses:", totalExpenses),
+                      const Text("Used", style: TextStyle(fontSize: 10, color: Colors.black54)),
+                      Text("${((1 - remainingPercent) * 100).toStringAsFixed(1)}%",
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
                   ),
-                ],
-              ),
+                  progressColor: Colors.deepPurple,
+                  backgroundColor: Colors.grey.shade300,
+                ),
+                const SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _budgetRow("Budget:", totalBudget),
+                    _budgetRow("Expenses:", totalExpenses),
+                    _budgetRow("Remaining:", totalBudget - totalExpenses),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCard({required String title, required Widget child}) {
     return Card(
-      color: Colors.grey[900],
+      elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
-        padding: EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            Text(title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+            const SizedBox(height: 12),
             child,
           ],
         ),
@@ -161,28 +150,25 @@ class AnalyticsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String month, String expenseLabel, String incomeLabel) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(month, style: TextStyle(color: Colors.white70, fontSize: 16)),
-          Text(expenseLabel, style: TextStyle(color: Colors.red, fontSize: 16)),
-          Text(incomeLabel, style: TextStyle(color: Colors.green, fontSize: 16)),
-        ],
-      ),
+  Widget _infoRow(String label, double value, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(value.toStringAsFixed(0), style: const TextStyle(fontSize: 14, color: Colors.black87)),
+      ],
     );
   }
 
-  Widget _buildBudgetRow(String label, double amount) {
+  Widget _budgetRow(String label, double value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Text(label, style: TextStyle(color: Colors.white70, fontSize: 14)),
-          SizedBox(width: 5),
-          Text(amount.toStringAsFixed(0), style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+          const SizedBox(width: 5),
+          Text(value.toStringAsFixed(0),
+              style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );
