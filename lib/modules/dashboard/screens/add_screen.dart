@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
-import '../../transactions/transaction_form.dart';
 import '../../../core/config/constants.dart';
+import '../../../core/config/app_styles.dart';
+import '../../../widgets/custom_widgets.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -13,145 +13,293 @@ class AddTransactionScreen extends StatefulWidget {
   _AddTransactionScreenState createState() => _AddTransactionScreenState();
 }
 
-class _AddTransactionScreenState extends State<AddTransactionScreen> {
+class _AddTransactionScreenState extends State<AddTransactionScreen>
+    with SingleTickerProviderStateMixin {
   String _selectedType = 'expense';
   String _selectedCategory = 'shopping';
   String _selectedStatus = 'completed';
   String _selectedPaymentMethod = 'cash';
   final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
+    _animationController.dispose();
     _noteController.dispose();
+    _amountController.dispose();
     super.dispose();
+  }
+
+  void _saveTransaction() {
+    final double? amount = double.tryParse(_amountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount.')),
+      );
+      return;
+    }
+
+    final newTransaction = Transaction(
+      type: _selectedType,
+      category: _selectedCategory,
+      amount: amount,
+      status: _selectedStatus,
+      paymentMethod: _selectedPaymentMethod,
+      date: DateTime.now(),
+      note: _noteController.text,
+    );
+
+    Provider.of<TransactionProvider>(context, listen: false)
+        .addTransaction(newTransaction);
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "Add Transaction",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title:
+        Text("Add Transaction", style: AppStyles.heading.copyWith(color: AppColors.text)),
         centerTitle: true,
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'expense', label: Text('Expense')),
-                ButtonSegment(value: 'income', label: Text('Income')),
-              ],
-              selected: {_selectedType},
-              onSelectionChanged: (Set<String> newSelection) {
-                setState(() {
-                  _selectedType = newSelection.first;
-                  _selectedCategory = _selectedType == 'expense'
-                      ? TransactionIcons.expenseIcons.keys.first
-                      : TransactionIcons.incomeIcons.keys.first;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Category Dropdown
-            _buildDropdownField(
-              label: 'Category',
-              value: _selectedCategory,
-              items: (_selectedType == 'expense'
-                  ? TransactionIcons.expenseIcons.keys
-                  : TransactionIcons.incomeIcons.keys)
-                  .map((String category) => DropdownMenuItem(
-                value: category,
-                child: Row(
-                  children: [
-                    Icon(_selectedType == 'expense'
-                        ? TransactionIcons.expenseIcons[category]
-                        : TransactionIcons.incomeIcons[category]),
-                    const SizedBox(width: 8),
-                    Text(category),
-                  ],
-                ),
-              ))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val!),
-            ),
-            const SizedBox(height: 16),
-
-            _buildDropdownField(
-              label: 'Payment Method',
-              value: _selectedPaymentMethod,
-              items: TransactionIcons.paymentMethodIcons.keys
-                  .map((String method) => DropdownMenuItem(
-                value: method,
-                child: Row(
-                  children: [
-                    Icon(TransactionIcons.paymentMethodIcons[method]),
-                    const SizedBox(width: 8),
-                    Text(method),
-                  ],
-                ),
-              ))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
-            ),
-            const SizedBox(height: 16),
-
-            _buildDropdownField(
-              label: 'Status',
-              value: _selectedStatus,
-              items: TransactionIcons.statusIcons.keys
-                  .map((String status) => DropdownMenuItem(
-                value: status,
-                child: Row(
-                  children: [
-                    Icon(TransactionIcons.statusIcons[status]),
-                    const SizedBox(width: 8),
-                    Text(status),
-                  ],
-                ),
-              ))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedStatus = val!),
-            ),
-            const SizedBox(height: 16),
-
-            // Preview Card
-            TransactionItem(
-              type: _selectedType,
-              category: _selectedCategory,
-              status: _selectedStatus,
-              paymentMethod: _selectedPaymentMethod,
-              date: DateTime.now(),
-              note: _noteController.text,
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.text),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-    );
-  }
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Transaction Type', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AnimatedSelectionCard(
+                            isSelected: _selectedType == 'expense',
+                            title: 'Expense',
+                            icon: Icons.remove_circle_outline,
+                            onTap: () => setState(() {
+                              _selectedType = 'expense';
+                              _selectedCategory =
+                                  TransactionIcons.expenseIcons.keys.first;
+                            }),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: AnimatedSelectionCard(
+                            isSelected: _selectedType == 'income',
+                            title: 'Income',
+                            icon: Icons.add_circle_outline,
+                            onTap: () => setState(() {
+                              _selectedType = 'income';
+                              _selectedCategory =
+                                  TransactionIcons.incomeIcons.keys.first;
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
 
-  Widget _buildDropdownField({
-    required String label,
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        prefixIcon: const Icon(Icons.category_outlined),
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Category', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 4,
+                      childAspectRatio: 0.9,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      children: (_selectedType == 'expense'
+                          ? TransactionIcons.expenseIcons
+                          : TransactionIcons.incomeIcons)
+                          .entries
+                          .map((entry) => GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedCategory = entry.key),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _selectedCategory == entry.key
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : Colors.grey.shade200,
+                              ),
+                              child: Icon(
+                                entry.value,
+                                color: _selectedCategory == entry.key
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _selectedCategory == entry.key
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Payment Method', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedPaymentMethod,
+                      decoration: AppStyles.textFieldDecoration,
+                      items: TransactionIcons.paymentMethodIcons.keys
+                          .map((String method) => DropdownMenuItem(
+                        value: method,
+                        child: Row(
+                          children: [
+                            Icon(TransactionIcons.paymentMethodIcons[method],
+                                color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(method),
+                          ],
+                        ),
+                      ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Status', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedStatus,
+                      decoration: AppStyles.textFieldDecoration,
+                      items: TransactionIcons.statusIcons.keys
+                          .map((String status) => DropdownMenuItem(
+                        value: status,
+                        child: Row(
+                          children: [
+                            Icon(TransactionIcons.statusIcons[status],
+                                color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(status),
+                          ],
+                        ),
+                      ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedStatus = val!),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Amount', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: AppStyles.textFieldDecoration.copyWith(
+                        hintText: 'Enter amount...',
+                        prefixIcon: const Icon(Icons.attach_money_outlined),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              CustomCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Note', style: AppStyles.subheading),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _noteController,
+                      decoration: AppStyles.textFieldDecoration.copyWith(
+                        hintText: 'Add a note...',
+                        prefixIcon: const Icon(Icons.note_add_outlined),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Center(
+                child: CustomButton(
+                  text: 'Save Transaction',
+                  icon: Icons.save_outlined,
+                  onPressed: _saveTransaction,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      items: items,
-      onChanged: onChanged,
     );
   }
 }

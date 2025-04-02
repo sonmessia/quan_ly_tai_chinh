@@ -3,6 +3,7 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
+import 'package:quan_ly_tai_chinh/modules/dashboard/screens/accounts_tab.dart';
 
 
 class ReportsScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
 
   @override
   void initState() {
@@ -49,7 +51,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         controller: _tabController,
         children: [
           AnalyticsTab(transactions: transactions),
-          const Center(child: Text("Accounts View", style: TextStyle(color: Colors.black87, fontSize: 16))),
+          AccountScreen(),
         ],
       ),
     );

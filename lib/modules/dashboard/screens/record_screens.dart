@@ -5,6 +5,8 @@ import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
 import '../../../core/config/constants.dart';
 import '../../transactions/transactionDetailScreen.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key});
@@ -172,15 +174,32 @@ class _RecordsScreenState extends State<RecordsScreen> {
                           ? TransactionIcons.incomeIcons[t.category.toLowerCase()]
                           : TransactionIcons.expenseIcons[t.category.toLowerCase()];
 
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TransactionDetailScreen(transaction: t),
+                      return Slidable(
+                        key: ValueKey(t), // nếu có id, nếu không dùng ValueKey(t)
+                        endActionPane: ActionPane(
+                          motion: const ScrollMotion(),
+                          extentRatio: 0.5, // chiếm 50% chiều rộng item
+                          children: [
+                            SlidableAction(
+                              onPressed: (context) {
+                                // TODO: mở màn edit
+                              },
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              icon: Icons.edit,
+                              label: 'Edit',
                             ),
-                          );
-                        },
+                            SlidableAction(
+                              onPressed: (context) {
+                                // TODO: xác nhận rồi xóa
+                              },
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                              label: 'Delete',
+                            ),
+                          ],
+                        ),
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.grey.shade100,

@@ -65,42 +65,69 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transaction Detail'),
+        backgroundColor: Colors.amber,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Details',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.black,
+          ),
+        ),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert), // ba chấm dọc
-            onSelected: (value) {
-              if (value == 'edit') {
-                // TODO: mở khung sửa (hiện bottom sheet hoặc chuyển trang sửa)
-              } else if (value == 'delete') {
-                // TODO: xác nhận và xóa giao dịch
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit, size: 18),
-                    SizedBox(width: 8),
-                    Text('Edit'),
-                  ],
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (context) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit, color: Colors.black),
+                          title: const Text('Edit'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _toggleEdit();
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.delete, color: Colors.red),
+                          title: const Text('Delete'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _deleteTransaction();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.more_vert, color: Colors.black),
               ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete, size: 18, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete'),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
