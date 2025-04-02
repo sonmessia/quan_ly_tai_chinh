@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
 import '../../../core/config/constants.dart';
 import '../../../core/config/app_styles.dart';
 import '../../../widgets/custom_widgets.dart';
+
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -260,6 +262,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                     TextField(
                       controller: _amountController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly, // chỉ cho nhập số
+                        LengthLimitingTextInputFormatter(10),   // giới hạn tối đa 10 chữ số
+                      ],
                       decoration: AppStyles.textFieldDecoration.copyWith(
                         hintText: 'Enter amount...',
                         prefixIcon: const Icon(Icons.attach_money_outlined),

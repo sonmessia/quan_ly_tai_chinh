@@ -21,47 +21,102 @@ class BarChartWidget extends StatefulWidget {
   State<BarChartWidget> createState() => _BarChartWidgetState();
 }
 
-class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProviderStateMixin {
+class _BarChartWidgetState extends State<BarChartWidget>
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late ScrollController _scrollController;
   late AnimationController _animationController;
   late Animation<double> _animation;
-  int? touchedIndex;
-  bool isScrolledToEnd = false;
+  bool _isFirstBuild = true;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  void _scrollToCurrentMonth() {
+    if (_scrollController.hasClients) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final chartWidth = max(screenWidth - 32, 700.0);
+      final barWidth = chartWidth / 12;
+
+      _scrollController.animateTo(
+        chartWidth - screenWidth + 32,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _initializeAnimation();
+
+    _scrollController.addListener(() {
+      setState(() {}); // Để cập nhật UI khi scroll
+    });
+  }
+
+  void _initializeAnimation() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
+
     _animation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOutCubic,
     );
-    _animationController.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-        );
-      }
+    _animation.addListener(() {
+      setState(() {});
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isFirstBuild) {
+      _isFirstBuild = false;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startAnimation();
+        _scrollToCurrentMonth();
+      });
+    }
+  }
+
+  void _startAnimation() {
+    _animationController.reset();
+    _animationController.forward();
+  }
+
+  void _handleTabChange() {
+    _startAnimation();
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _scrollToCurrentMonth();
+    });
+  }
+
+  @override
+  void didUpdateWidget(BarChartWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.transactions != widget.transactions ||
+        oldWidget.type != widget.type) {
+      _handleTabChange();
+    }
+  }
+
+  @override
   void dispose() {
-    _scrollController.dispose();
+    _animation.removeListener(() {});
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   double _calculateLabelWidth(BuildContext context, double maxY) {
-    final text = _formatMoney(maxY); // ví dụ "103.0K"
+    final text = _formatMoney(maxY);
     final TextPainter painter = TextPainter(
       text: TextSpan(
         text: text,
@@ -70,18 +125,29 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
       textDirection: ui.TextDirection.ltr,
     )..layout();
 
-    return painter.width + 20; // thêm padding trái/phải
+    return painter.width + 20;
   }
-
 
   List<double> _getMonthlyData() {
     final now = DateTime.now();
     List<double> data = List.filled(12, 0);
+
+    final currentMonth = DateTime(now.year, now.month);
+    final startMonth = DateTime(currentMonth.year, currentMonth.month - 11);
+
     for (var t in widget.transactions) {
       if (t.type.toLowerCase() == widget.type.toLowerCase()) {
-        final diff = (now.year - t.date.year) * 12 + (now.month - t.date.month);
-        if (diff >= 0 && diff < 12) {
-          data[11 - diff] += t.amount;
+        final transactionDate = DateTime(t.date.year, t.date.month);
+        if (transactionDate.isAfter(startMonth.subtract(const Duration(days: 1))) &&
+            transactionDate.isBefore(currentMonth.add(const Duration(days: 1)))) {
+
+          final monthDiff = (currentMonth.year - transactionDate.year) * 12 +
+              (currentMonth.month - transactionDate.month);
+          final index = 11 - monthDiff;
+
+          if (index >= 0 && index < 12) {
+            data[index] += t.amount;
+          }
         }
       }
     }
@@ -103,17 +169,50 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
     if (value >= 1000000) {
       return '${(value / 1000000).toStringAsFixed(1)}M';
     } else if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}K'; // ✅ Giữ 1 số lẻ để tránh trùng
+      return '${(value / 1000).toStringAsFixed(1)}K';
     }
     return value.toStringAsFixed(0);
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
     final formatter = NumberFormat('#,###', 'vi_VN');
     final now = DateTime.now();
     final monthlyData = _getMonthlyData();
+
+    bool hasData = monthlyData.any((amount) => amount > 0);
+
+    if (!hasData) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'No data available for the last 12 months',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.textTheme.bodySmall?.color,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final thisMonthTotal = monthlyData.last;
     final lastMonthTotal = monthlyData.length >= 2 ? monthlyData[monthlyData.length - 2] : 0;
     final percentage = lastMonthTotal == 0 ? 0 : ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100);
@@ -217,6 +316,8 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
               child: SingleChildScrollView(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                clipBehavior: Clip.none,
                 child: SizedBox(
                   width: max(MediaQuery.of(context).size.width - 32, 700),
                   child: BarChart(
@@ -233,12 +334,13 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
                           tooltipPadding: const EdgeInsets.all(12),
                           tooltipMargin: 8,
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final monthIndex = (now.month - 11 + group.x.toInt()) % 12;
-                            final year = now.month - 11 + group.x.toInt() <= 0
-                                ? now.year - 1
-                                : now.year;
+                            final currentMonth = DateTime(now.year, now.month);
+                            final monthDate = DateTime(
+                                currentMonth.year,
+                                currentMonth.month - (11 - group.x.toInt())
+                            );
                             return BarTooltipItem(
-                              '${DateFormat.MMMM().format(DateTime(year, monthIndex + 1))}\n${formatter.format(rod.toY)} đ',
+                              '${DateFormat.MMMM().format(monthDate)}\n${formatter.format(rod.toY)} đ',
                               const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -252,8 +354,8 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
                         topTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 20, // 👈 giúp đẩy biểu đồ xuống để không che số trên
-                            getTitlesWidget: (value, meta) => const SizedBox.shrink(), // nếu không cần hiện gì trên top
+                            reservedSize: 20,
+                            getTitlesWidget: (value, meta) => const SizedBox.shrink(),
                           ),
                         ),
                         rightTitles: AxisTitles(
@@ -278,11 +380,15 @@ class _BarChartWidgetState extends State<BarChartWidget> with SingleTickerProvid
                             showTitles: true,
                             reservedSize: 36,
                             getTitlesWidget: (value, meta) {
-                              final monthIndex = (now.month - 11 + value.toInt()) % 12;
+                              final currentMonth = DateTime(now.year, now.month);
+                              final monthDate = DateTime(
+                                  currentMonth.year,
+                                  currentMonth.month - (11 - value.toInt())
+                              );
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  DateFormat.MMM().format(DateTime(0, monthIndex + 1)),
+                                  DateFormat.MMM().format(monthDate),
                                   style: theme.textTheme.bodySmall,
                                 ),
                               );
