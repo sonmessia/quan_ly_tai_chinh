@@ -10,14 +10,14 @@ class CustomButton extends StatelessWidget {
   final IconData? icon;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.backgroundColor,
     this.textColor,
     this.isOutlined = false,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +74,11 @@ class CustomCard extends StatelessWidget {
   final Color? color;
 
   const CustomCard({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -101,12 +101,12 @@ class AnimatedSelectionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const AnimatedSelectionCard({
-    Key? key,
+    super.key,
     required this.isSelected,
     required this.title,
     required this.icon,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

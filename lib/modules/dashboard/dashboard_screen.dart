@@ -125,11 +125,11 @@ class _DashboardScreenState extends State<DashboardScreen>
           // Main content with page view
           PageView(
             controller: _pageController,
-            children: _screens,
             onPageChanged: (index) {
               setState(() => _selectedIndex = index);
             },
             physics: const BouncingScrollPhysics(),
+            children: _screens,
           ),
 
           // Bottom navigation bar with glass effect

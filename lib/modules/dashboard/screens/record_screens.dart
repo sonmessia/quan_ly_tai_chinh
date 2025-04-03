@@ -44,28 +44,35 @@ class _RecordsScreenState extends State<RecordsScreen>
     try {
       setState(() => _isLoading = true);
 
+      // Get current user ID
       final userId = AuthController.instance.currentUser?.id;
       if (userId == null) {
-        print('Error: User ID is null');
-        return;
+        throw Exception('User not authenticated');
       }
 
+      // Fetch transactions for the user
       final transactions =
           await TransactionService.getTransactionsByUserId(userId);
-      print('Fetched ${transactions.length} transactions'); // Debug print
 
-      // Update the provider with fetched transactions
-      if (mounted) {
-        Provider.of<TransactionProvider>(context, listen: false)
-            .setTransactions(transactions);
-      }
+      if (!mounted) return;
 
-      setState(() {
-        _isLoading = false;
-      });
+      // Update transactions in provider
+      Provider.of<TransactionProvider>(context, listen: false)
+          .setTransactions(transactions);
     } catch (e) {
-      print('Error loading transactions: $e');
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      // Show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load transactions: ${e.toString()}'),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -176,7 +183,8 @@ class _RecordsScreenState extends State<RecordsScreen>
             Column(
               children: [
                 ExpansionTile(
-                  leading: Icon(Icons.book_rounded, color: Colors.deepPurple.shade400),
+                  leading: Icon(Icons.book_rounded,
+                      color: Colors.deepPurple.shade400),
                   title: Text(
                     'Cash Book Type',
                     style: TextStyle(
@@ -185,7 +193,8 @@ class _RecordsScreenState extends State<RecordsScreen>
                     ),
                   ),
                   tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-                  childrenPadding: const EdgeInsets.only(left: 32, right: 16, bottom: 8),
+                  childrenPadding:
+                      const EdgeInsets.only(left: 32, right: 16, bottom: 8),
                   initiallyExpanded: _isCashbookExpanded,
                   onExpansionChanged: (expanded) {
                     setState(() => _isCashbookExpanded = expanded);
@@ -209,7 +218,9 @@ class _RecordsScreenState extends State<RecordsScreen>
                             : Icons.radio_button_unchecked_rounded,
                         color: isSelected
                             ? Colors.deepPurple
-                            : isVipOnly ? Colors.grey : Colors.deepPurple.shade300,
+                            : isVipOnly
+                                ? Colors.grey
+                                : Colors.deepPurple.shade300,
                       ),
                       title: Row(
                         children: [
@@ -219,13 +230,16 @@ class _RecordsScreenState extends State<RecordsScreen>
                               color: isVipOnly
                                   ? Colors.grey.shade500
                                   : Colors.deepPurple.shade700,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           if (isVipOnly)
                             Container(
                               margin: const EdgeInsets.only(left: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.amber.shade100,
                                 borderRadius: BorderRadius.circular(8),
@@ -245,7 +259,8 @@ class _RecordsScreenState extends State<RecordsScreen>
                         if (isVipOnly) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('This option is available for VIP only.'),
+                              content: const Text(
+                                  'This option is available for VIP only.'),
                               backgroundColor: Colors.amber.shade700,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -266,10 +281,10 @@ class _RecordsScreenState extends State<RecordsScreen>
               ],
             ),
 
-
 // VIP
             ListTile(
-              leading: Icon(Icons.workspace_premium_rounded, color: Colors.amber.shade600),
+              leading: Icon(Icons.workspace_premium_rounded,
+                  color: Colors.amber.shade600),
               title: Text(
                 'Upgrade to VIP',
                 style: TextStyle(
@@ -317,8 +332,7 @@ class _RecordsScreenState extends State<RecordsScreen>
 
         final filtered = transactions.where((t) {
           final matchesDate = t.date.year == selectedDate.year &&
-              t.date.month == selectedDate.month &&
-              t.date.day == selectedDate.day;
+              t.date.month == selectedDate.month; // Chỉ lọc theo tháng và năm
 
           final matchesSearch = searchQuery.isEmpty ||
               t.category.toLowerCase().contains(searchQuery.toLowerCase()) ||
@@ -720,10 +734,54 @@ class _RecordsScreenState extends State<RecordsScreen>
                       child: const Text('Cancel'),
                     ),
                     TextButton(
-                      onPressed: () {
-                        Provider.of<TransactionProvider>(context, listen: false)
-                            .deleteTransaction(t);
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        try {
+                          Navigator.pop(context); // Close confirmation dialog
+
+                          // Show loading indicator
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            },
+                          );
+
+                          // Delete from MongoDB first
+                          await TransactionService.deleteTransaction(
+                              t.id.toString());
+
+                          // If MongoDB deletion successful, update local state
+                          if (mounted) {
+                            Provider.of<TransactionProvider>(context,
+                                    listen: false)
+                                .deleteTransaction(t);
+
+                            Navigator.pop(context); // Close loading indicator
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                    'Transaction deleted successfully'),
+                                backgroundColor: Colors.green.shade400,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context); // Close loading indicator
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text('Failed to delete transaction: $e'),
+                                backgroundColor: Colors.red.shade400,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
                       },
                       child: Text('Delete',
                           style: TextStyle(color: Colors.red.shade700)),

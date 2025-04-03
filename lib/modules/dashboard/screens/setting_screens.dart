@@ -94,7 +94,7 @@ class _SettingScreensState extends State<SettingScreens>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isLoggedIn ? (currentUser!.displayName ?? currentUser.email ?? 'User') : 'Sign In',
+                        isLoggedIn ? (currentUser.displayName ?? currentUser.email ?? 'User') : 'Sign In',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

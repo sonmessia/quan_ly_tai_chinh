@@ -28,7 +28,7 @@ class AuthController {
       return user;
     } catch (e) {
       // Re-throw the exception to be handled by the UI
-      throw e;
+      rethrow;
     }
   }
 
