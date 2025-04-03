@@ -144,7 +144,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                   opacity: _fadeAnimation,
                   child: Column(
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 10),
                       // Thêm đoạn này
 // Back button
                       Align(
@@ -211,7 +211,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
 
                       // Form Container with Glassmorphism effect
                       ClipRRect(
@@ -409,7 +409,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                         ],
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
 
                       // Social Login Button
                       _buildSocialButton(

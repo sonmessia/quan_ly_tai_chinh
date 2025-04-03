@@ -148,10 +148,10 @@ class _ChartsScreenState extends State<ChartsScreen> with TickerProviderStateMix
                       child: BarChartWidget(transactions: transactions, type: type),
                     ),
                     _buildChartContainer(
-                      child: PieChartWidget(transactions: transactions, type: type),
+                      child: LineChartWidget(transactions: transactions, type: type),
                     ),
                     _buildChartContainer(
-                      child: LineChartWidget(transactions: transactions, type: type),
+                      child: PieChartWidget(transactions: transactions, type: type),
                     ),
                   ],
                 ),

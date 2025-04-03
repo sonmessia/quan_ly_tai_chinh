@@ -106,7 +106,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                   opacity: _fadeAnimation,
                   child: Column(
                     children: [
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Back button
                       Align(

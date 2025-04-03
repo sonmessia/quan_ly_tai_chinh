@@ -19,6 +19,8 @@ class _RecordsScreenState extends State<RecordsScreen> with SingleTickerProvider
   late DateTime selectedDate;
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
+  bool _isCashbookExpanded = false;
+  String _selectedCashbook = 'Personal';
   String searchQuery = "";
 
   @override
@@ -134,8 +136,115 @@ class _RecordsScreenState extends State<RecordsScreen> with SingleTickerProvider
                 ],
               ),
             ),
-            _buildDrawerItem(Icons.dashboard_rounded, 'Dashboard'),
-            _buildDrawerItem(Icons.bar_chart_rounded, 'Statistics'),
+            // Cash Book Type (Expandable)
+            Column(
+              children: [
+                ExpansionTile(
+                  leading: Icon(Icons.book_rounded, color: Colors.deepPurple.shade400),
+                  title: Text(
+                    'Cash Book Type',
+                    style: TextStyle(
+                      color: Colors.deepPurple.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                  childrenPadding: const EdgeInsets.only(left: 32, right: 16, bottom: 8),
+                  initiallyExpanded: _isCashbookExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() => _isCashbookExpanded = expanded);
+                  },
+                  // ✨ Thêm 2 dòng dưới để ẩn gạch
+                  collapsedShape: const RoundedRectangleBorder(
+                    side: BorderSide.none,
+                  ),
+                  shape: const RoundedRectangleBorder(
+                    side: BorderSide.none,
+                  ),
+                  children: ['Personal', 'Team', 'Business'].map((type) {
+                    final isSelected = _selectedCashbook == type;
+                    final isVipOnly = type != 'Personal';
+
+                    return ListTile(
+                      dense: true,
+                      leading: Icon(
+                        isSelected
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected
+                            ? Colors.deepPurple
+                            : isVipOnly ? Colors.grey : Colors.deepPurple.shade300,
+                      ),
+                      title: Row(
+                        children: [
+                          Text(
+                            type,
+                            style: TextStyle(
+                              color: isVipOnly
+                                  ? Colors.grey.shade500
+                                  : Colors.deepPurple.shade700,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          if (isVipOnly)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'VIP',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.amber.shade800,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      onTap: () {
+                        if (isVipOnly) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('This option is available for VIP only.'),
+                              backgroundColor: Colors.amber.shade700,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() {
+                          _selectedCashbook = type;
+                          _isCashbookExpanded = false;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+
+                // ➤ Chỉ 1 Divider bên dưới
+                Divider(color: Colors.deepPurple.shade100),
+              ],
+            ),
+
+
+// VIP
+            ListTile(
+              leading: Icon(Icons.workspace_premium_rounded, color: Colors.amber.shade600),
+              title: Text(
+                'Upgrade to VIP',
+                style: TextStyle(
+                  color: Colors.deepPurple.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                // TODO: Navigate to VIP screen or show dialog
+              },
+            ),
             _buildDrawerItem(Icons.settings_rounded, 'Settings'),
             _buildDrawerItem(Icons.help_outline_rounded, 'Help & Support'),
             const Divider(),
