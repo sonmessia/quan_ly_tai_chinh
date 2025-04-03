@@ -3,7 +3,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:quan_ly_tai_chinh/services/transaction_service.dart';
 import 'dart:ui';
+import 'auth_controller.dart';
+import 'package:quan_ly_tai_chinh/services/user_service.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -12,7 +15,8 @@ class SignInScreen extends StatefulWidget {
   _SignInScreenState createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderStateMixin {
+class _SignInScreenState extends State<SignInScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -52,14 +56,15 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
       }
 
       try {
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
         final UserCredential userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+            await FirebaseAuth.instance.signInWithCredential(credential);
 
         if (userCredential.user != null) {
           Navigator.pushReplacementNamed(context, '/dashboard');
@@ -92,12 +97,53 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     Navigator.pop(context, "settings");
   }
 
-  void _handleEmailSignIn() {
+  void _handleEmailSignIn() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       _showErrorSnackBar('Please fill in all fields');
       return;
     }
-    // Add your email sign in logic here
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Use AuthController to login
+      final user = await AuthController.instance
+          .login(emailController.text.trim(), passwordController.text);
+
+      // Kiểm tra xem người dùng đã đăng nhập chưa
+      if (!AuthController.instance.isLoggedIn) {
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      // Lấy thông tin người dùng hiện tại
+      final currentUser = AuthController.instance.currentUser!;
+
+      // Set user ID in TransactionService after successful login
+      TransactionService.setUserId(currentUser.id!);
+
+      // Hiển thị thông tin người dùng
+      Text('Xin chào, ${currentUser.username}');
+
+      // Tải transactions của người dùng
+      final transactions =
+          await AuthController.instance.getCurrentUserTransactions();
+
+      // Navigate to dashboard
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (e) {
+      // Xử lý các trường hợp lỗi khác nhau
+      if (e.toString().contains('404')) {
+        _showErrorSnackBar('Email hoặc mật khẩu không đúng');
+      } else if (e.toString().contains('401')) {
+        _showErrorSnackBar('Thông tin đăng nhập không hợp lệ');
+      } else {
+        _showErrorSnackBar('Đăng nhập thất bại: ${e.toString()}');
+      }
+      print('Email Sign In Error: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -175,7 +221,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.deepPurple.shade200.withOpacity(0.5),
+                              color:
+                                  Colors.deepPurple.shade200.withOpacity(0.5),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -228,7 +275,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.deepPurple.shade100.withOpacity(0.3),
+                                  color: Colors.deepPurple.shade100
+                                      .withOpacity(0.3),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                 ),
@@ -276,7 +324,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                       ),
                                       onPressed: () {
                                         setState(() {
-                                          _isPasswordVisible = !_isPasswordVisible;
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
                                         });
                                       },
                                     ),
@@ -297,9 +346,11 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                   width: double.infinity,
                                   height: 55,
                                   child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _handleEmailSignIn,
+                                    onPressed:
+                                        _isLoading ? null : _handleEmailSignIn,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple.shade600,
+                                      backgroundColor:
+                                          Colors.deepPurple.shade600,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(15),
@@ -308,22 +359,23 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                     ),
                                     child: _isLoading
                                         ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                            ),
+                                          )
                                         : const Text(
-                                      "Sign In",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                            "Sign In",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                   ),
                                 ),
 
@@ -342,7 +394,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                     ),
                                     GestureDetector(
                                       onTap: () {
-                                        Navigator.pushReplacementNamed(context, '/signup');
+                                        Navigator.pushReplacementNamed(
+                                            context, '/signup');
                                       },
                                       child: Text(
                                         "Sign Up",

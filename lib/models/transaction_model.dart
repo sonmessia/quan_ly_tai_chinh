@@ -1,6 +1,8 @@
 class Transaction {
   final String type;
-  final String category;
+  final int? userId;
+  final String? id; // Change to String? since MongoDB uses string IDs
+  final String categoryName;
   final double amount;
   final String paymentMethod;
   final String status;
@@ -9,21 +11,44 @@ class Transaction {
 
   Transaction({
     required this.type,
-    required this.category,
+    this.userId,
+    this.id,
+    required this.categoryName,
     required this.amount,
     required this.paymentMethod,
     required this.status,
     required this.date,
-    this.note
-  }) {
-    if (amount < 0) {
-      throw ArgumentError.value(amount, 'amount', 'Amount must be greater than zero');
-    }
-    if (type.toLowerCase() != 'income' && type.toLowerCase() != 'expense') {
-      throw ArgumentError.value(type, 'type', 'Type must be either "income" or "expense"');
-    }
+    this.note,
+  });
+
+  // Add getter for backward compatibility
+  String get category => categoryName;
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      type: json['type'] ?? '',
+      userId: json['user_id'],
+      id: json['transaction_id']?.toString(), // MongoDB uses _id
+      categoryName: json['category_name'] ?? '',
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      paymentMethod: json['payment_method'] ?? '', // Changed to match backend
+      status: json['status'] ?? '',
+      date:
+          DateTime.parse(json['create_at'] ?? DateTime.now().toIso8601String()),
+      note: json['note'],
+    );
   }
 
-  String get safeType => type.toLowerCase() == 'income' ? 'Income' : 'Expense';
-  String get safeCategory => category.isEmpty ? 'Uncategorized' : category;
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'user_id': userId,
+      'category_name': categoryName,
+      'amount': amount,
+      'payment_method': paymentMethod,
+      'status': status,
+      'date': date.toIso8601String(),
+      'note': note,
+    };
+  }
 }

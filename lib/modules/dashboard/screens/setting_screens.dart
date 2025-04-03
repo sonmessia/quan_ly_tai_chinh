@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-
+import '../../../controllers/auth_controller.dart';
 import '../../settings/specific_settings_screen.dart';
 
 class SettingScreens extends StatefulWidget {
@@ -10,7 +10,8 @@ class SettingScreens extends StatefulWidget {
   _SettingScreensState createState() => _SettingScreensState();
 }
 
-class _SettingScreensState extends State<SettingScreens> with SingleTickerProviderStateMixin {
+class _SettingScreensState extends State<SettingScreens>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -25,6 +26,104 @@ class _SettingScreensState extends State<SettingScreens> with SingleTickerProvid
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
     _animationController.forward();
+  }
+
+  Widget _buildProfileCard() {
+    final currentUser = AuthController.instance.currentUser;
+    final isLoggedIn = currentUser != null;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.deepPurple.shade100.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: InkWell(
+            onTap: () {
+              if (!isLoggedIn) {
+                Navigator.pushNamed(context, '/signin');
+              }
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Row(
+              children: [
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepPurple.shade300,
+                        Colors.deepPurple.shade500,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.shade100.withOpacity(0.5),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    size: 35,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isLoggedIn ? (currentUser!.displayName ?? currentUser.email ?? 'User') : 'Sign In',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple.shade700,
+                        ),
+                      ),
+                      Text(
+                        isLoggedIn
+                            ? (currentUser.email ?? 'No email')
+                            : 'Sign in, more exciting!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.deepPurple.shade300,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  isLoggedIn ? Icons.settings : Icons.arrow_forward_ios,
+                  color: Colors.deepPurple.shade300,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -80,99 +179,9 @@ class _SettingScreensState extends State<SettingScreens> with SingleTickerProvid
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   children: [
-
                     const SizedBox(height: 16),
 
-                    // Profile Card with Glassmorphism
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.deepPurple.shade100.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/signin');
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 70,
-                                  height: 70,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.deepPurple.shade300,
-                                        Colors.deepPurple.shade500,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.deepPurple.shade100.withOpacity(0.5),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 35,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Sign In',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple.shade700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Sign in, more exciting!',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.deepPurple.shade300,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.deepPurple.shade300,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildProfileCard(),
 
                     const SizedBox(height: 24),
 
@@ -190,7 +199,8 @@ class _SettingScreensState extends State<SettingScreens> with SingleTickerProvid
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.deepPurple.shade100.withOpacity(0.3),
+                                color:
+                                    Colors.deepPurple.shade100.withOpacity(0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -237,7 +247,8 @@ class _SettingScreensState extends State<SettingScreens> with SingleTickerProvid
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const SpecificSettingsScreen(),
+                                      builder: (context) =>
+                                          const SpecificSettingsScreen(),
                                     ),
                                   );
                                 },
@@ -299,7 +310,8 @@ class _SettingScreensState extends State<SettingScreens> with SingleTickerProvid
                         title,
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                          fontWeight:
+                              isBold ? FontWeight.bold : FontWeight.w500,
                           color: Colors.deepPurple.shade700,
                         ),
                       ),

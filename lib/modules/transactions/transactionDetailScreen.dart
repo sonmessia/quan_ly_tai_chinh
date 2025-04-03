@@ -3,17 +3,20 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaction_model.dart';
 import '../../../provider/transaction_provider.dart';
+import '../../../services/transaction_service.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
-  Transaction transaction;  // Changed to non-final for updates
+  Transaction transaction; // Changed to non-final for updates
 
   TransactionDetailScreen({super.key, required this.transaction});
 
   @override
-  State<TransactionDetailScreen> createState() => _TransactionDetailScreenState();
+  State<TransactionDetailScreen> createState() =>
+      _TransactionDetailScreenState();
 }
 
-class _TransactionDetailScreenState extends State<TransactionDetailScreen> with SingleTickerProviderStateMixin {
+class _TransactionDetailScreenState extends State<TransactionDetailScreen>
+    with SingleTickerProviderStateMixin {
   bool _isEditing = false;
   late TextEditingController _amountController;
   late TextEditingController _noteController;
@@ -23,8 +26,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(text: widget.transaction.amount.toString());
-    _noteController = TextEditingController(text: widget.transaction.note ?? '');
+    print('Transaction data: ${widget.transaction.toJson()}'); // Debug print
+    _amountController =
+        TextEditingController(text: widget.transaction.amount.toString());
+    _noteController =
+        TextEditingController(text: widget.transaction.note ?? '');
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -89,11 +95,44 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Provider.of<TransactionProvider>(context, listen: false)
-                  .deleteTransaction(widget.transaction);
-              Navigator.pop(context);
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                Navigator.pop(context); // Close confirmation dialog
+
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                );
+
+                // Delete from MongoDB using transaction_id
+                await TransactionService.deleteTransaction(
+                    widget.transaction.id.toString());
+
+                // Update local state through provider
+                if (mounted) {
+                  Provider.of<TransactionProvider>(context, listen: false)
+                      .deleteTransaction(widget.transaction);
+
+                  Navigator.pop(context); // Close loading indicator
+                  Navigator.pop(context); // Return to previous screen
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Transaction deleted successfully')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Close loading indicator
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete transaction: $e')),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade400,
@@ -104,49 +143,70 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: const Text('Delete',
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
 
-  void _saveChanges() {
-    final newAmount = double.tryParse(_amountController.text) ?? widget.transaction.amount;
-    final newTransaction = Transaction(
-      type: widget.transaction.type,
-      category: widget.transaction.category,
-      amount: newAmount,
-      status: widget.transaction.status,
-      paymentMethod: widget.transaction.paymentMethod,
-      date: widget.transaction.date,
-      note: _noteController.text.trim(),
-    );
+  void _saveChanges() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
 
-    Provider.of<TransactionProvider>(context, listen: false)
-        .updateTransaction(widget.transaction, newTransaction);
+      final newAmount =
+          double.tryParse(_amountController.text) ?? widget.transaction.amount;
+      final newTransaction = Transaction(
+        type: widget.transaction.type,
+        userId: widget.transaction.userId,
+        categoryName: widget.transaction.categoryName,
+        amount: newAmount,
+        paymentMethod: widget.transaction.paymentMethod,
+        status: widget.transaction.status,
+        date: widget.transaction.date,
+        note: _noteController.text.trim(),
+      );
 
-    setState(() {
-      widget.transaction = newTransaction;
-      _isEditing = false;
-    });
+      // Update in MongoDB using transaction_id
+      final updatedTransaction = await TransactionService.updateTransaction(
+        widget.transaction.id.toString(),
+        newTransaction,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green.shade100),
-            const SizedBox(width: 12),
-            const Text('Changes saved successfully'),
-          ],
-        ),
-        backgroundColor: Colors.deepPurple.shade400,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+      // Update local state through provider
+      if (mounted) {
+        Provider.of<TransactionProvider>(context, listen: false)
+            .updateTransaction(widget.transaction, updatedTransaction);
+
+        setState(() {
+          widget.transaction = updatedTransaction;
+          _isEditing = false;
+        });
+
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update transaction: $e')),
+        );
+      }
+    }
   }
+
   Widget _buildHeader(Transaction transaction) {
     return Container(
       width: double.infinity,
@@ -198,6 +258,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Amount section
             _buildDetailSection(
               'Amount',
               NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
@@ -205,18 +266,29 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
               widget.transaction.type == 'income'
                   ? Icons.arrow_downward_rounded
                   : Icons.arrow_upward_rounded,
-              widget.transaction.type == 'income'
-                  ? Colors.green
-                  : Colors.red,
+              widget.transaction.type == 'income' ? Colors.green : Colors.red,
             ),
             _buildDivider(),
+
+            // Type section
             _buildDetailSection(
-              'Category',
-              widget.transaction.category,
+              'Type',
+              widget.transaction.type.toUpperCase(),
               Icons.category_rounded,
               Colors.deepPurple.shade400,
             ),
             _buildDivider(),
+
+            // Category section
+            _buildDetailSection(
+              'Category',
+              widget.transaction.categoryName,
+              Icons.folder_rounded,
+              Colors.deepPurple.shade400,
+            ),
+            _buildDivider(),
+
+            // Payment Method section
             _buildDetailSection(
               'Payment Method',
               widget.transaction.paymentMethod,
@@ -224,6 +296,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
               Colors.deepPurple.shade400,
             ),
             _buildDivider(),
+
+            // Status section
             _buildDetailSection(
               'Status',
               widget.transaction.status,
@@ -231,12 +305,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
               Colors.deepPurple.shade400,
             ),
             _buildDivider(),
+
+            // Date section
             _buildDetailSection(
-              'Date & Time',
+              'Created At',
               DateFormat('dd MMMM yyyy, HH:mm').format(widget.transaction.date),
               Icons.access_time_rounded,
               Colors.deepPurple.shade400,
             ),
+
+            // Note section (if exists)
             if (widget.transaction.note?.isNotEmpty ?? false) ...[
               _buildDivider(),
               _buildDetailSection(
@@ -246,6 +324,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
                 Colors.deepPurple.shade400,
               ),
             ],
+
+            // Edit fields (if editing)
             if (_isEditing) ...[
               _buildDivider(),
               FadeTransition(
@@ -259,7 +339,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
     );
   }
 
-  Widget _buildDetailSection(String label, String value, IconData icon, Color color) {
+  Widget _buildDetailSection(
+      String label, String value, IconData icon, Color color) {
     return Row(
       children: [
         Container(
@@ -416,62 +497,62 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> with 
       ),
       bottomNavigationBar: _isEditing
           ? Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _toggleEdit,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
                   ),
-                  side: BorderSide(color: Colors.grey.shade300),
-                ),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                ],
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.deepPurple.shade400,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _toggleEdit,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saveChanges,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple.shade400,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ),
-          ],
-        ),
-      )
+            )
           : null,
     );
   }

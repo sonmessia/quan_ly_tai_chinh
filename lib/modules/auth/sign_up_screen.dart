@@ -1,6 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:ui';
+import 'package:quan_ly_tai_chinh/services/auth_service.dart';
+
+class AuthController {
+  static final AuthController instance = AuthController._internal();
+  factory AuthController() => instance;
+  AuthController._internal();
+
+  Future<void> setCurrentUser(dynamic user) async {
+    // Save the user data - implement storage logic here
+    // This could use shared preferences, secure storage, or another persistence method
+  }
+
+  void logout() {
+    // Implement logout logic here
+    // This could clear stored user data or tokens
+  }
+
+  bool get isLoggedIn {
+    // Implement logic to check if user is logged in
+    // This could check stored user data or tokens
+    return false;
+  }
+
+  void checkAuthStatus() {
+    // Implement logic to check authentication status
+    // This could check stored user data or tokens
+  }
+}
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -9,9 +37,13 @@ class SignUpScreen extends StatefulWidget {
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderStateMixin {
+class _SignUpScreenState extends State<SignUpScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   late AnimationController _animationController;
@@ -31,15 +63,51 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
   }
 
   void _handleSignUp() async {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+    // Validate inputs
+    if (emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        usernameController.text.isEmpty) {
       _showErrorSnackBar('Please fill in all fields');
       return;
     }
 
+    if (passwordController.text != confirmPasswordController.text) {
+      _showErrorSnackBar('Passwords do not match');
+      return;
+    }
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
-    // TODO: Implement sign up logic
+
+    try {
+      final user = await AuthService.signUp(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        username: usernameController.text.trim(),
+      );
+
+      if (mounted) {
+        // Store user data (you might want to use a state management solution)
+        await AuthController.instance.setCurrentUser(user);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome ${user.username}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to dashboard or login screen
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _showErrorSnackBar(String message) {
@@ -137,7 +205,8 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.deepPurple.shade200.withOpacity(0.5),
+                              color:
+                                  Colors.deepPurple.shade200.withOpacity(0.5),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -179,7 +248,8 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.deepPurple.shade100.withOpacity(0.3),
+                                  color: Colors.deepPurple.shade100
+                                      .withOpacity(0.3),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                 ),
@@ -227,7 +297,8 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                                       ),
                                       onPressed: () {
                                         setState(() {
-                                          _isPasswordVisible = !_isPasswordVisible;
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
                                         });
                                       },
                                     ),
@@ -241,16 +312,75 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                                   ),
                                 ),
 
-                                const SizedBox(height: 30),
+                                const SizedBox(height: 20),
+
+                                // Confirm Password Field
+                                TextField(
+                                  controller: confirmPasswordController,
+                                  obscureText: !_isPasswordVisible,
+                                  decoration: InputDecoration(
+                                    hintText: "Confirm password",
+                                    prefixIcon: Icon(
+                                      Icons.lock_outline_rounded,
+                                      color: Colors.deepPurple.shade300,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordVisible
+                                            ? Icons.visibility_off_rounded
+                                            : Icons.visibility_rounded,
+                                        color: Colors.deepPurple.shade300,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.deepPurple.shade50,
+                                    contentPadding: const EdgeInsets.all(16),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Username Field
+                                TextField(
+                                  controller: usernameController,
+                                  decoration: InputDecoration(
+                                    hintText: "Enter your username",
+                                    prefixIcon: Icon(
+                                      Icons.person_outline_rounded,
+                                      color: Colors.deepPurple.shade300,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.deepPurple.shade50,
+                                    contentPadding: const EdgeInsets.all(16),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
 
                                 // Sign Up Button
                                 SizedBox(
                                   width: double.infinity,
                                   height: 55,
                                   child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _handleSignUp,
+                                    onPressed:
+                                        _isLoading ? null : _handleSignUp,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple.shade600,
+                                      backgroundColor:
+                                          Colors.deepPurple.shade600,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(15),
@@ -259,22 +389,23 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                                     ),
                                     child: _isLoading
                                         ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                            ),
+                                          )
                                         : const Text(
-                                      "Create Account",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                            "Create Account",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                   ),
                                 ),
 
@@ -409,7 +540,8 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
-                                    Navigator.pushReplacementNamed(context, '/signin');
+                                    Navigator.pushReplacementNamed(
+                                        context, '/signin');
                                   },
                               ),
                               const TextSpan(text: " and "),

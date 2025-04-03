@@ -1,4 +1,5 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "cmake.sourceDirectory": "C:/Users/Duyen/StudioProjects/quan_ly_tai_chinh/linux"
+    "cmake.sourceDirectory": "/home/hoangsonsdk/StudioProjects/quan_ly_tai_chinh/linux",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

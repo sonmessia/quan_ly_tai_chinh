@@ -1,0 +1,2 @@
+/home/hoangsonsdk/StudioProjects/quan_ly_tai_chinh/android/app/.cxx/Debug/s3m18671/x86_64/CMakeFiles/edit_cache.dir
+/home/hoangsonsdk/StudioProjects/quan_ly_tai_chinh/android/app/.cxx/Debug/s3m18671/x86_64/CMakeFiles/rebuild_cache.dir

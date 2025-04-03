@@ -60,7 +60,8 @@ class _TransactionItemState extends State<TransactionItem> {
                 color: widget.type == 'expense' ? Colors.red : Colors.green,
                 size: 32,
               ),
-              title: Text(widget.category, style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(widget.category,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Row(
                 children: [
                   Icon(
@@ -78,7 +79,8 @@ class _TransactionItemState extends State<TransactionItem> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: TextFormField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
@@ -90,7 +92,8 @@ class _TransactionItemState extends State<TransactionItem> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
               child: TextFormField(
                 controller: _noteController,
                 maxLines: 2,
@@ -115,7 +118,7 @@ class _TransactionItemState extends State<TransactionItem> {
 
                   final transaction = Transaction(
                     type: widget.type,
-                    category: widget.category,
+                    categoryName: widget.category,
                     amount: double.parse(amountController.text),
                     paymentMethod: widget.paymentMethod,
                     status: widget.status,

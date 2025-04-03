@@ -1,0 +1,1 @@
+/home/hoangsonsdk/StudioProjects/quan_ly_tai_chinh/build/app/intermediates/cxx/Debug/s3m18671/obj/arm64-v8a
