@@ -194,10 +194,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                       );
                     } else {
                       // Regular tab items
+                      int actualIndex = _tabItems.indexOf(item);
+                      int screenIndex = actualIndex > 2 ? actualIndex - 1 : actualIndex;
+
                       return TabItem(
                         icon: Icon(
                           item['icon'],
                           size: 24,
+                          color: _selectedIndex == screenIndex ? primaryColor : Colors.grey.shade400,
                         ),
                         title: item['title'],
                       );

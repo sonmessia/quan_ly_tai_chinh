@@ -116,7 +116,7 @@ class _LineChartWidgetState extends State<LineChartWidget> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Row(
+                Column(
                   children: [
                     _StatCard(
                       title: 'Total',
@@ -124,7 +124,7 @@ class _LineChartWidgetState extends State<LineChartWidget> {
                       color: gradientColors[0],
                       icon: Icons.account_balance_wallet,
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(height: 16), // đổi width thành height
                     _StatCard(
                       title: 'Average',
                       value: NumberFormat('#,###').format(average),
@@ -199,7 +199,7 @@ class _LineChartWidgetState extends State<LineChartWidget> {
                           if (index >= 0 && index < dailyData.length) {
                             final date = dailyData[index].key;
                             return Padding(
-                              padding: const EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 16),
                               child: Text(
                                 DateFormat('dd').format(date),
                                 style: theme.textTheme.bodySmall,
@@ -292,38 +292,37 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
+    return Container( // ← không còn Expanded ở đây
+      margin: const EdgeInsets.symmetric(vertical: 8), // để cách ra giữa 2 dòng
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$value đ',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$value đ',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
